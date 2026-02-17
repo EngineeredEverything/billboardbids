@@ -1,26 +1,40 @@
 // Stripe Payment Integration
-// NOTE: For demo purposes. In production, use environment variables for API keys.
+// Production-ready with environment-based configuration
 
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_demo'; // Replace with real key
+let stripe;
+let stripeConfigured = false;
 
 // Initialize Stripe (client-side)
-let stripe;
-
-function initializeStripe() {
-    if (typeof Stripe !== 'undefined') {
-        stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+async function initializeStripe() {
+    if (typeof Stripe === 'undefined') {
+        console.warn('Stripe.js not loaded');
+        return false;
+    }
+    
+    try {
+        // Fetch publishable key from server
+        const response = await fetch(`${API_BASE}/stripe/config`);
+        const config = await response.json();
+        
+        if (config.publishableKey && config.publishableKey !== 'pk_test_demo') {
+            stripe = Stripe(config.publishableKey);
+            stripeConfigured = config.configured;
+            console.log('Stripe initialized:', stripeConfigured ? 'LIVE' : 'DEMO');
+            return true;
+        } else {
+            console.warn('Stripe not configured - using demo mode');
+            return false;
+        }
+    } catch (error) {
+        console.error('Failed to initialize Stripe:', error);
+        return false;
     }
 }
 
 // Create payment intent and process payment
 async function processPayment(bookingData, amount) {
     try {
-        // In production, this would:
-        // 1. Create Stripe checkout session via API
-        // 2. Redirect to Stripe hosted checkout
-        // 3. Handle webhook for payment confirmation
-        // 4. Update booking status to "confirmed"
-        
+        // Create Stripe checkout session via API
         const response = await fetch(`${API_BASE}/create-checkout-session`, {
             method: 'POST',
             headers: {
@@ -28,15 +42,24 @@ async function processPayment(bookingData, amount) {
             },
             body: JSON.stringify({
                 bookingId: bookingData.id,
-                amount: amount
+                amount: amount,
+                successUrl: window.location.origin + '/apps/billboardbids/success.html?session_id={CHECKOUT_SESSION_ID}',
+                cancelUrl: window.location.origin + '/apps/billboardbids/?canceled=true'
             })
         });
         
         const session = await response.json();
         
+        if (session.demo) {
+            // Demo mode - show message
+            throw new Error(session.message || 'Payment system not configured');
+        }
+        
         if (session.url) {
             // Redirect to Stripe checkout
+            console.log('Redirecting to Stripe checkout...');
             window.location.href = session.url;
+            return { success: true, redirecting: true };
         } else {
             throw new Error('Failed to create checkout session');
         }

@@ -479,42 +479,59 @@ app.get('/api/billboards/:id/analytics', (req, res) => {
 app.post('/api/create-checkout-session', async (req, res) => {
     const { bookingId, amount, successUrl, cancelUrl } = req.body;
     
-    const booking = bookings.find(b => b.id === parseInt(bookingId));
+    // Use database query instead of in-memory array
+    const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(bookingId);
     if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
     }
     
     try {
-        // For demo purposes - in production, use real Stripe API
-        // const session = await stripe.checkout.sessions.create({
-        //     payment_method_types: ['card'],
-        //     line_items: [{
-        //         price_data: {
-        //             currency: 'usd',
-        //             product_data: {
-        //                 name: `${booking.billboardName} - ${booking.campaignName}`,
-        //                 description: `${booking.duration} hours starting ${booking.startDate} at ${booking.startTime}`
-        //             },
-        //             unit_amount: Math.round(amount * 100)
-        //         },
-        //         quantity: 1
-        //     }],
-        //     mode: 'payment',
-        //     success_url: successUrl || `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-        //     cancel_url: cancelUrl || `${req.headers.origin}/cancel`
-        // });
+        // Check if Stripe is properly configured
+        if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_demo') {
+            return res.json({
+                demo: true,
+                message: 'Stripe not configured. Set STRIPE_SECRET_KEY environment variable.',
+                bookingId,
+                amount
+            });
+        }
         
-        // Demo response
+        // Create Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `Billboard Ad: ${booking.billboard_name}`,
+                        description: `${booking.campaign_name} - ${booking.duration} hours starting ${booking.start_date} at ${booking.start_time}`,
+                        images: booking.creative_url ? [`${req.headers.origin}${booking.creative_url}`] : []
+                    },
+                    unit_amount: Math.round(amount * 100) // Convert to cents
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url: successUrl || `${req.headers.origin || 'http://92.112.184.224/apps/billboardbids'}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: cancelUrl || `${req.headers.origin || 'http://92.112.184.224/apps/billboardbids'}/?canceled=true`,
+            metadata: {
+                bot: 'billboardbids', // Required for fleet revenue tracking
+                bookingId: bookingId.toString(),
+                billboardId: booking.billboard_id.toString(),
+                campaignName: booking.campaign_name,
+                duration: booking.duration.toString(),
+                startDate: booking.start_date,
+                startTime: booking.start_time
+            }
+        });
+        
         res.json({
-            demo: true,
-            message: 'Stripe integration ready - add API keys to process real payments',
-            bookingId,
-            amount,
-            // url: session.url (in production)
+            url: session.url,
+            sessionId: session.id
         });
     } catch (error) {
         console.error('Stripe error:', error);
-        res.status(500).json({ error: 'Payment processing failed' });
+        res.status(500).json({ error: 'Payment processing failed', details: error.message });
     }
 });
 
@@ -524,19 +541,58 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     
     try {
-        // const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        let event;
         
-        // if (event.type === 'checkout.session.completed') {
-        //     const session = event.data.object;
-        //     // Update booking status to confirmed
-        //     const bookingId = session.metadata.bookingId;
-        //     const booking = bookings.find(b => b.id === parseInt(bookingId));
-        //     if (booking) {
-        //         booking.status = 'confirmed';
-        //         booking.paymentId = session.payment_intent;
-        //         booking.paidAt = new Date().toISOString();
-        //     }
-        // }
+        // Verify webhook signature if secret is configured
+        if (webhookSecret && webhookSecret !== 'whsec_demo') {
+            event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        } else {
+            // In test mode without webhook secret, parse directly
+            event = JSON.parse(req.body.toString());
+        }
+        
+        // Handle the event
+        switch (event.type) {
+            case 'checkout.session.completed':
+                const session = event.data.object;
+                const bookingId = session.metadata.bookingId;
+                
+                if (bookingId) {
+                    // Update booking status in database
+                    const updateStmt = db.prepare(`
+                        UPDATE bookings 
+                        SET status = ?, 
+                            payment_id = ?,
+                            updated_at = ?
+                        WHERE id = ?
+                    `);
+                    
+                    updateStmt.run(
+                        'confirmed',
+                        session.payment_intent,
+                        new Date().toISOString(),
+                        parseInt(bookingId)
+                    );
+                    
+                    console.log(`Payment confirmed for booking ${bookingId}`);
+                    
+                    // TODO: Send confirmation email via emailService
+                    // TODO: Alert billboard owner
+                }
+                break;
+                
+            case 'payment_intent.succeeded':
+                console.log('Payment intent succeeded:', event.data.object.id);
+                break;
+                
+            case 'payment_intent.payment_failed':
+                console.log('Payment failed:', event.data.object.id);
+                // TODO: Handle failed payment (update booking status, notify user)
+                break;
+                
+            default:
+                console.log(`Unhandled event type: ${event.type}`);
+        }
         
         res.json({received: true});
     } catch (error) {
@@ -717,6 +773,14 @@ app.get('/api/health', (req, res) => {
             timestamp: new Date().toISOString()
         });
     }
+});
+
+// Stripe config (publishable key for client-side)
+app.get('/api/stripe/config', (req, res) => {
+    res.json({
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_demo',
+        configured: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_demo')
+    });
 });
 
 // Serve frontend
