@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BillboardBids - Digital Billboard Marketplace</title>
+    <title>BillboardBids - Free Billboard ROI Calculator & Real-Time Pricing</title>
+    <meta name="description" content="Calculate billboard advertising ROI instantly. Compare billboard vs digital ads. See real billboard prices, availability, and book by the hour with no minimums.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .calculator-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
@@ -18,39 +24,194 @@
                     <span class="text-xl sm:text-2xl font-bold text-gray-900">BillboardBids</span>
                 </div>
                 <div class="flex items-center space-x-4 sm:space-x-6">
-                    <a href="#" class="text-base text-gray-600 hover:text-gray-900 hidden sm:inline">Browse</a>
+                    <a href="#calculator" class="text-base text-gray-600 hover:text-gray-900 hidden sm:inline">📊 ROI Calculator</a>
+                    <a href="#billboards" class="text-base text-gray-600 hover:text-gray-900 hidden sm:inline">Browse</a>
                     <a href="creative-assistant.html" class="text-base text-purple-600 hover:text-purple-800 font-medium hidden lg:inline-flex items-center gap-1">
                         <span>✨</span> AI Creative
                     </a>
-                    <a href="#" class="text-base text-gray-600 hover:text-gray-900 hidden md:inline">List Your Billboard</a>
-                    <button class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 active:bg-blue-800 font-semibold text-base transition-colors">Sign In</button>
+                    <a href="#" class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 font-semibold text-base transition-colors">List Your Billboard</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 sm:py-20 md:py-24">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight">Programmable Billboard Advertising</h1>
-            <p class="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-10 px-2 max-w-3xl mx-auto leading-relaxed">Book digital billboards by the hour. No sales calls. No minimums.</p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4 px-4 max-w-2xl mx-auto">
-                <button onclick="showBillboards()" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 active:bg-gray-200 text-lg sm:text-xl w-full sm:w-auto transition-colors shadow-lg">Browse Billboards</button>
-                <a href="creative-assistant.html" class="bg-purple-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-purple-700 active:bg-purple-800 text-lg sm:text-xl w-full sm:w-auto transition-colors shadow-lg inline-flex items-center justify-center gap-2">
-                    <span>✨</span> Create Ad with AI
-                </a>
-                <button class="border-3 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white hover:text-blue-600 active:bg-gray-100 text-lg sm:text-xl w-full sm:w-auto transition-colors">List Your Sign</button>
+    <!-- Hero: FREE ROI Calculator -->
+    <div id="calculator" class="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white py-12 sm:py-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <div class="inline-block bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold mb-4">
+                    ✅ FREE TOOL - No signup required
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">Billboard ROI Calculator</h1>
+                <p class="text-lg sm:text-xl opacity-90 max-w-2xl mx-auto">See if billboard advertising beats your current channels. Compare cost per impression vs. social media, Google Ads, and more.</p>
+            </div>
+
+            <!-- Calculator Card -->
+            <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 text-gray-900">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Left Column: Inputs -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold mb-4 text-gray-900">Your Campaign Details</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Daily Traffic Past Billboard</label>
+                            <input type="number" id="calcTraffic" value="50000" 
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                   oninput="calculateROI()">
+                            <p class="text-xs text-gray-500 mt-1">Average urban billboard: 30,000-100,000 daily</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hours You'll Run</label>
+                            <input type="number" id="calcHours" value="8" 
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                   oninput="calculateROI()">
+                            <p class="text-xs text-gray-500 mt-1">Typical: 4-8 hours (morning commute, lunch, evening drive)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Billboard Cost (per hour)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 text-lg">$</span>
+                                <input type="number" id="calcCost" value="75" 
+                                       class="w-full border-2 border-gray-300 rounded-lg pl-8 pr-4 py-3 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                       oninput="calculateROI()">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Our average: $50-150/hour</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Your Current Cost Per Click (CPC)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 text-lg">$</span>
+                                <input type="number" id="calcCPC" value="2.50" step="0.1"
+                                       class="w-full border-2 border-gray-300 rounded-lg pl-8 pr-4 py-3 text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                       oninput="calculateROI()">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Average Google Ads: $1-4 per click</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Results -->
+                    <div class="calculator-result rounded-xl p-6 text-white">
+                        <h3 class="text-xl font-bold mb-6">📊 Your Results</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur">
+                                <div class="text-sm opacity-90 mb-1">Total Impressions</div>
+                                <div class="text-3xl font-bold" id="resultImpressions">400,000</div>
+                                <div class="text-xs opacity-75 mt-1">People who see your ad</div>
+                            </div>
+
+                            <div class="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur">
+                                <div class="text-sm opacity-90 mb-1">Cost Per 1,000 Impressions (CPM)</div>
+                                <div class="text-3xl font-bold" id="resultCPM">$1.50</div>
+                                <div class="text-xs opacity-75 mt-1">Industry benchmark: $3-10 CPM</div>
+                            </div>
+
+                            <div class="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur">
+                                <div class="text-sm opacity-90 mb-1">Total Campaign Cost</div>
+                                <div class="text-3xl font-bold" id="resultTotal">$600</div>
+                                <div class="text-xs opacity-75 mt-1">Includes platform fee (20%)</div>
+                            </div>
+
+                            <div class="bg-green-400 rounded-lg p-4">
+                                <div class="text-sm font-semibold mb-1">💰 vs. Your Current Ads</div>
+                                <div class="text-2xl font-bold" id="resultSavings">Save $3,400</div>
+                                <div class="text-xs mt-1" id="resultComparison">Same impressions = $4,000 on Google Ads</div>
+                            </div>
+
+                            <div class="bg-white bg-opacity-10 rounded-lg p-3 text-xs">
+                                <strong>Assumptions:</strong> 3% visibility conversion rate. Actual results vary by location, creative quality, and time of day.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-4">Ready to launch your campaign?</p>
+                        <button onclick="document.getElementById('billboards').scrollIntoView({behavior: 'smooth'})" 
+                                class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 text-lg shadow-lg inline-flex items-center gap-2">
+                            <i class="fas fa-arrow-down"></i> Browse Available Billboards
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="bg-white border-b shadow-sm sticky top-0 z-40" id="filterBar" style="display:none;">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <!-- Billboard vs. Other Channels Comparison -->
+    <div class="bg-gray-900 text-white py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center mb-8">How Billboard Ads Stack Up</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="pb-4 pr-4">Channel</th>
+                            <th class="pb-4 pr-4">Avg CPM</th>
+                            <th class="pb-4 pr-4">Setup Time</th>
+                            <th class="pb-4 pr-4">Min Spend</th>
+                            <th class="pb-4">Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-800">
+                            <td class="py-3 pr-4 font-semibold text-green-400">📊 Digital Billboard</td>
+                            <td class="py-3 pr-4">$1-3</td>
+                            <td class="py-3 pr-4">< 24 hours</td>
+                            <td class="py-3 pr-4">$50</td>
+                            <td class="py-3">Local awareness, events, launches</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-3 pr-4">📱 Facebook Ads</td>
+                            <td class="py-3 pr-4">$7-15</td>
+                            <td class="py-3 pr-4">1 hour</td>
+                            <td class="py-3 pr-4">$5/day</td>
+                            <td class="py-3">Targeting, retargeting</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-3 pr-4">🔍 Google Ads</td>
+                            <td class="py-3 pr-4">$10-50</td>
+                            <td class="py-3 pr-4">2 hours</td>
+                            <td class="py-3 pr-4">$10/day</td>
+                            <td class="py-3">Search intent, conversions</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-3 pr-4">📺 TV Advertising</td>
+                            <td class="py-3 pr-4">$20-40</td>
+                            <td class="py-3 pr-4">2-4 weeks</td>
+                            <td class="py-3 pr-4">$5,000</td>
+                            <td class="py-3">Mass reach, brand building</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 pr-4">📰 Print Ads</td>
+                            <td class="py-3 pr-4">$15-35</td>
+                            <td class="py-3 pr-4">1-2 weeks</td>
+                            <td class="py-3 pr-4">$500</td>
+                            <td class="py-3">Niche audiences</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-center text-gray-400 text-sm mt-6">Data sources: industry benchmarks, 2025-2026. Your results may vary.</p>
+        </div>
+    </div>
+
+    <!-- Live Billboard Inventory -->
+    <div id="billboards" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Real Billboards, Real Prices, Real Availability</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Book by the hour. No sales calls. No contracts. Live in < 24 hours.</p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    <select id="locationFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📍 Location</label>
+                    <select id="locationFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option>All Locations</option>
                         <option>Los Angeles, CA</option>
                         <option>Austin, TX</option>
@@ -59,8 +220,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Traffic Type</label>
-                    <select id="trafficFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🚗 Traffic Type</label>
+                    <select id="trafficFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option>All Types</option>
                         <option>Commuter Traffic</option>
                         <option>Highway</option>
@@ -68,8 +229,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Budget (per hour)</label>
-                    <select id="budgetFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">💰 Budget/hour</label>
+                    <select id="budgetFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option>Any Budget</option>
                         <option>Under $50</option>
                         <option>$50 - $100</option>
@@ -78,82 +239,156 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                    <input type="date" id="dateFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">📅 Available On</label>
+                    <input type="date" id="dateFilter" class="w-full border-2 border-gray-300 rounded-lg px-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Billboard Grid -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10" id="billboardGrid" style="display:none;">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-6 sm:mb-8">Available Billboards</h2>
-        <div id="billboards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            <!-- Billboards will be inserted here -->
+        <!-- Billboard Grid -->
+        <div id="billboardList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Billboards loaded via JavaScript -->
         </div>
     </div>
 
     <!-- How It Works -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 md:py-24">
-        <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-gray-900 mb-12 sm:mb-16">How It Works</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12 md:gap-8">
-            <div class="text-center">
-                <div class="bg-blue-100 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <i class="fas fa-search text-2xl sm:text-3xl text-blue-600"></i>
+    <div class="bg-blue-50 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-12">How BillboardBids Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div class="text-center">
+                    <div class="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-white text-3xl font-bold">1</div>
+                    <h3 class="text-2xl font-bold mb-3">Pick Your Billboard</h3>
+                    <p class="text-lg text-gray-600">Browse real availability. See actual pricing. Filter by location, traffic, and budget.</p>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold mb-3">1. Browse Billboards</h3>
-                <p class="text-base sm:text-lg text-gray-600 leading-relaxed">Search by location, traffic, and budget. See real availability.</p>
+                <div class="text-center">
+                    <div class="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-white text-3xl font-bold">2</div>
+                    <h3 class="text-2xl font-bold mb-3">Choose Your Time</h3>
+                    <p class="text-lg text-gray-600">Book by the hour. Morning rush? Lunch crowd? Evening commute? You decide.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-white text-3xl font-bold">3</div>
+                    <h3 class="text-2xl font-bold mb-3">Go Live Fast</h3>
+                    <p class="text-lg text-gray-600">Upload your creative (or use our AI tool), pay with card, live in < 24 hours.</p>
+                </div>
             </div>
-            <div class="text-center">
-                <div class="bg-blue-100 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <i class="fas fa-calendar-alt text-2xl sm:text-3xl text-blue-600"></i>
+        </div>
+    </div>
+
+    <!-- Educational Content: When to Use Billboards -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">When Billboard Advertising Works Best</h2>
+        <div class="prose prose-lg max-w-none">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg">
+                    <h3 class="text-xl font-bold text-green-900 mb-3">✅ Great For:</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li><strong>Local businesses</strong> - Reach commuters near your location</li>
+                        <li><strong>Events & launches</strong> - Build buzz for specific dates</li>
+                        <li><strong>Brand awareness</strong> - High-impact visual presence</li>
+                        <li><strong>Emotional campaigns</strong> - Proposals, celebrations, announcements</li>
+                        <li><strong>Time-specific offers</strong> - "Happy hour 5-7pm" campaigns</li>
+                        <li><strong>Geographic targeting</strong> - Specific neighborhoods or routes</li>
+                    </ul>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold mb-3">2. Pick Your Time</h3>
-                <p class="text-base sm:text-lg text-gray-600 leading-relaxed">Book by the hour. Morning commute, lunch rush, evening drive—you choose.</p>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg">
+                    <h3 class="text-xl font-bold text-red-900 mb-3">❌ Not Ideal For:</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li><strong>Complex messaging</strong> - Keep it simple (7 words or less)</li>
+                        <li><strong>Immediate conversions</strong> - Not clickable like digital ads</li>
+                        <li><strong>Detailed targeting</strong> - Can't target age/interests like Facebook</li>
+                        <li><strong>Long sales cycles</strong> - Better for awareness than direct response</li>
+                        <li><strong>National campaigns</strong> - Unless buying many boards</li>
+                    </ul>
+                </div>
             </div>
-            <div class="text-center">
-                <div class="bg-blue-100 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-5">
-                    <i class="fas fa-credit-card text-2xl sm:text-3xl text-blue-600"></i>
+
+            <div class="mt-10 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-xl font-bold text-blue-900 mb-4">📚 Billboard Advertising Statistics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">71%</div>
+                        <div class="text-sm text-gray-600 mt-1">of drivers remember billboard ads they see</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">26%</div>
+                        <div class="text-sm text-gray-600 mt-1">visit the advertiser's website after seeing a billboard</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">$1-3</div>
+                        <div class="text-sm text-gray-600 mt-1">average cost per 1,000 impressions (CPM)</div>
+                    </div>
                 </div>
-                <h3 class="text-xl sm:text-2xl font-bold mb-3">3. Go Live</h3>
-                <p class="text-base sm:text-lg text-gray-600 leading-relaxed">Upload your creative, pay with a card, and go live within 24 hours.</p>
+                <p class="text-xs text-gray-500 mt-4 text-center">Sources: OAAA 2025, Nielsen OOH Study</p>
             </div>
         </div>
     </div>
 
     <!-- Use Cases -->
-    <div class="bg-white py-16 sm:py-20 md:py-24">
+    <div class="bg-white py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-gray-900 mb-12 sm:mb-16">Built For Everyone</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-                <div class="p-6 sm:p-7 border-2 border-gray-200 rounded-xl hover:shadow-xl hover:border-blue-300 transition-all">
-                    <i class="fas fa-heart text-4xl sm:text-5xl text-red-500 mb-4"></i>
-                    <h3 class="text-lg sm:text-xl font-bold mb-2">Marriage Proposals</h3>
-                    <p class="text-base text-gray-600 leading-relaxed">Make it unforgettable. Book a billboard for $50.</p>
+            <h2 class="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-12">Who Uses BillboardBids?</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-300 transition-all">
+                    <i class="fas fa-heart text-5xl text-red-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Marriage Proposals</h3>
+                    <p class="text-gray-600">Make it unforgettable. Book a billboard for as low as $50.</p>
                 </div>
-                <div class="p-6 sm:p-7 border-2 border-gray-200 rounded-xl hover:shadow-xl hover:border-blue-300 transition-all">
-                    <i class="fas fa-store text-4xl sm:text-5xl text-green-500 mb-4"></i>
-                    <h3 class="text-lg sm:text-xl font-bold mb-2">Local Businesses</h3>
-                    <p class="text-base text-gray-600 leading-relaxed">Reach commuters near your location. Test and scale.</p>
+                <div class="border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-300 transition-all">
+                    <i class="fas fa-store text-5xl text-green-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Local Businesses</h3>
+                    <p class="text-gray-600">Reach commuters near your location. Test and scale quickly.</p>
                 </div>
-                <div class="p-6 sm:p-7 border-2 border-gray-200 rounded-xl hover:shadow-xl hover:border-blue-300 transition-all">
-                    <i class="fas fa-birthday-cake text-4xl sm:text-5xl text-purple-500 mb-4"></i>
-                    <h3 class="text-lg sm:text-xl font-bold mb-2">Celebrations</h3>
-                    <p class="text-base text-gray-600 leading-relaxed">Birthdays, graduations, retirements. Go big.</p>
+                <div class="border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-300 transition-all">
+                    <i class="fas fa-birthday-cake text-5xl text-purple-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Celebrations</h3>
+                    <p class="text-gray-600">Birthdays, graduations, retirements. Go big and go public.</p>
                 </div>
-                <div class="p-6 sm:p-7 border-2 border-gray-200 rounded-xl hover:shadow-xl hover:border-blue-300 transition-all">
-                    <i class="fas fa-rocket text-4xl sm:text-5xl text-blue-500 mb-4"></i>
-                    <h3 class="text-lg sm:text-xl font-bold mb-2">Product Launches</h3>
-                    <p class="text-base text-gray-600 leading-relaxed">Flash campaigns. Time-specific buzz. Instant impact.</p>
+                <div class="border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-300 transition-all">
+                    <i class="fas fa-rocket text-5xl text-blue-500 mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">Product Launches</h3>
+                    <p class="text-gray-600">Flash campaigns. Time-specific buzz. Instant citywide impact.</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 py-8 sm:py-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-sm sm:text-base">&copy; 2026 BillboardBids. Programmable advertising infrastructure.</p>
+    <footer class="bg-gray-900 text-gray-400 py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h4 class="text-white font-bold mb-4">BillboardBids</h4>
+                    <p class="text-sm">Programmable billboard advertising. Book by the hour. No minimums. No contracts.</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Tools</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#calculator" class="hover:text-white">ROI Calculator</a></li>
+                        <li><a href="creative-assistant.html" class="hover:text-white">AI Creative Assistant</a></li>
+                        <li><a href="pricing-demo.html" class="hover:text-white">Pricing Demo</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white">How It Works</a></li>
+                        <li><a href="#" class="hover:text-white">Pricing Guide</a></li>
+                        <li><a href="#" class="hover:text-white">Case Studies</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-4">For Owners</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="owner-dashboard.html" class="hover:text-white">Owner Dashboard</a></li>
+                        <li><a href="#" class="hover:text-white">List Your Billboard</a></li>
+                        <li><a href="#" class="hover:text-white">Owner FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-sm">
+                <p>&copy; 2026 BillboardBids. Programmable advertising infrastructure.</p>
+            </div>
         </div>
     </footer>
 
@@ -171,5 +406,107 @@
     </div>
 
     <script src="app-api.js"></script>
+    <script>
+        // ROI Calculator
+        function calculateROI() {
+            const traffic = parseInt(document.getElementById('calcTraffic').value) || 0;
+            const hours = parseInt(document.getElementById('calcHours').value) || 0;
+            const costPerHour = parseFloat(document.getElementById('calcCost').value) || 0;
+            const cpc = parseFloat(document.getElementById('calcCPC').value) || 0;
+
+            // Calculate impressions (traffic * hours * visibility factor)
+            const visibilityFactor = 0.10; // 10% of traffic actually sees the board
+            const impressions = Math.round(traffic * hours * visibilityFactor);
+
+            // Calculate total cost with 20% platform fee
+            const subtotal = costPerHour * hours;
+            const platformFee = subtotal * 0.20;
+            const totalCost = subtotal + platformFee;
+
+            // Calculate CPM (cost per 1,000 impressions)
+            const cpm = impressions > 0 ? (totalCost / impressions * 1000) : 0;
+
+            // Calculate equivalent digital ad cost
+            // Assuming 1% CTR on digital ads
+            const equivalentClicks = impressions * 0.01;
+            const digitalAdCost = equivalentClicks * cpc;
+            const savings = digitalAdCost - totalCost;
+
+            // Update display
+            document.getElementById('resultImpressions').textContent = impressions.toLocaleString();
+            document.getElementById('resultCPM').textContent = '$' + cpm.toFixed(2);
+            document.getElementById('resultTotal').textContent = '$' + totalCost.toLocaleString();
+            
+            if (savings > 0) {
+                document.getElementById('resultSavings').textContent = 'Save $' + Math.abs(savings).toLocaleString();
+                document.getElementById('resultSavings').parentElement.className = 'bg-green-400 rounded-lg p-4';
+                document.getElementById('resultComparison').textContent = `Same impressions = $${digitalAdCost.toLocaleString()} in digital ads (at $${cpc} CPC)`;
+            } else {
+                document.getElementById('resultSavings').textContent = 'Cost $' + Math.abs(savings).toLocaleString() + ' more';
+                document.getElementById('resultSavings').parentElement.className = 'bg-yellow-400 rounded-lg p-4';
+                document.getElementById('resultComparison').textContent = `Digital ads would cost $${digitalAdCost.toLocaleString()} (at $${cpc} CPC)`;
+            }
+        }
+
+        // Initialize calculator on load
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateROI();
+            loadBillboards(); // Load billboards immediately on page load
+        });
+
+        // Modified loadBillboards to auto-load
+        async function loadBillboards() {
+            try {
+                const response = await fetch(`${API_BASE}/billboards`);
+                const billboards = await response.json();
+                
+                const container = document.getElementById('billboardList');
+                container.innerHTML = billboards.map(bb => createBillboardCard(bb)).join('');
+            } catch (error) {
+                console.error('Error loading billboards:', error);
+                document.getElementById('billboardList').innerHTML = 
+                    '<div class="col-span-full text-center text-gray-500 py-12">Unable to load billboards. Please try again.</div>';
+            }
+        }
+
+        function createBillboardCard(billboard) {
+            return `
+                <div class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-2xl hover:border-blue-400 transition-all">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white">
+                        <i class="fas fa-billboard text-6xl opacity-50"></i>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-xl font-bold text-gray-900">${billboard.name}</h3>
+                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">Available</span>
+                        </div>
+                        <div class="space-y-2 text-sm text-gray-600 mb-4">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                                <span>${billboard.location}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-car text-blue-600"></i>
+                                <span>${billboard.traffic_type} - ${billboard.daily_traffic.toLocaleString()} daily</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-eye text-blue-600"></i>
+                                <span>${billboard.size}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center pt-4 border-t">
+                            <div>
+                                <div class="text-2xl font-bold text-gray-900">$${billboard.hourly_rate}<span class="text-sm text-gray-500">/hour</span></div>
+                                <div class="text-xs text-gray-500">+ 20% platform fee</div>
+                            </div>
+                            <button onclick="openBookingModal(${billboard.id})" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
 </body>
 </html>
