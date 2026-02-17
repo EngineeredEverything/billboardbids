@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Creative Assistant - BillboardBids</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .preview-billboard {
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .preview-content {
+            position: relative;
+            z-index: 10;
+            max-width: 90%;
+        }
+        .generating {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">📊 BillboardBids</h1>
+                    <p class="text-sm text-gray-600">AI Creative Assistant</p>
+                </div>
+                <a href="index.html" class="text-blue-600 hover:text-blue-800 font-medium">← Back to Marketplace</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input Panel -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">What do you want to say?</h2>
+                    
+                    <form id="creativeForm" class="space-y-4">
+                        <!-- Campaign Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Campaign Type</label>
+                            <select id="campaignType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="proposal">💍 Marriage Proposal</option>
+                                <option value="birthday">🎂 Birthday Surprise</option>
+                                <option value="business">🏢 Local Business</option>
+                                <option value="event">🎉 Event Promotion</option>
+                                <option value="announcement">📣 Personal Announcement</option>
+                                <option value="custom">✨ Custom Message</option>
+                            </select>
+                        </div>
+
+                        <!-- Main Message -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Main Message</label>
+                            <input type="text" id="mainMessage" placeholder="e.g., Will You Marry Me?" maxlength="50" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">Keep it short - billboards are read in 3-5 seconds</p>
+                        </div>
+
+                        <!-- Supporting Text -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Supporting Text (Optional)</label>
+                            <input type="text" id="supportingText" placeholder="e.g., Sarah, you're my everything" maxlength="80" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <!-- Call to Action -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Call to Action (Optional)</label>
+                            <input type="text" id="callToAction" placeholder="e.g., Call 555-1234" maxlength="40" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <!-- Color Theme -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Color Theme</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="romantic" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" title="Romantic Pink"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="professional" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" title="Professional Blue"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="energetic" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);" title="Energetic Orange"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="elegant" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);" title="Elegant Purple"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="bold" style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);" title="Bold Red"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="natural" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);" title="Natural Green"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="sunset" style="background: linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%);" title="Sunset"></button>
+                                <button type="button" class="theme-btn h-12 rounded-lg border-2 border-transparent hover:border-blue-500 transition" data-theme="midnight" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);" title="Midnight"></button>
+                            </div>
+                            <input type="hidden" id="colorTheme" value="romantic">
+                        </div>
+
+                        <!-- AI Suggestions -->
+                        <div class="border-t pt-4">
+                            <button type="button" id="aiSuggestBtn" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition flex items-center justify-center gap-2">
+                                <span>✨ Get AI Suggestions</span>
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2 text-center">AI will help you write a better, more impactful message</p>
+                        </div>
+
+                        <!-- Generate Preview -->
+                        <div class="border-t pt-4">
+                            <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">
+                                🎨 Update Preview
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- AI Suggestions Panel -->
+                <div id="suggestionsPanel" class="bg-white rounded-lg shadow-sm p-6 hidden">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">✨ AI Suggestions</h3>
+                    <div id="suggestionsContent" class="space-y-3">
+                        <!-- AI suggestions will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Live Preview</h2>
+                    
+                    <div id="billboardPreview" class="preview-billboard rounded-lg shadow-lg">
+                        <div class="preview-content">
+                            <div id="previewMain" class="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 drop-shadow-lg">
+                                Your Message Here
+                            </div>
+                            <div id="previewSupporting" class="text-xl md:text-2xl text-white/90 mb-4 drop-shadow-md hidden">
+                            </div>
+                            <div id="previewCTA" class="text-lg md:text-xl font-semibold text-white bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full inline-block hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-900 mb-2">💡 Billboard Best Practices</h4>
+                            <ul class="text-sm text-blue-800 space-y-1">
+                                <li>• Keep it under 7 words for maximum impact</li>
+                                <li>• Use high contrast colors</li>
+                                <li>• Make text readable from 500+ feet away</li>
+                                <li>• One clear message, one action</li>
+                            </ul>
+                        </div>
+
+                        <button id="downloadBtn" class="w-full bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition">
+                            💾 Download Creative (1920x1080)
+                        </button>
+
+                        <button id="useCreativeBtn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">
+                            ✅ Use This Creative
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Theme colors
+        const themes = {
+            romantic: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            professional: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            energetic: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            elegant: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+            bold: 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+            natural: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+            sunset: 'linear-gradient(135deg, #ff6e7f 0%, #bfe9ff 100%)',
+            midnight: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)'
+        };
+
+        let selectedTheme = 'romantic';
+
+        // Theme selection
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('border-blue-500'));
+                btn.classList.add('border-blue-500');
+                selectedTheme = btn.dataset.theme;
+                document.getElementById('colorTheme').value = selectedTheme;
+                updatePreview();
+            });
+        });
+
+        // Select first theme by default
+        document.querySelector('.theme-btn').classList.add('border-blue-500');
+
+        // Form submission
+        document.getElementById('creativeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            updatePreview();
+        });
+
+        function updatePreview() {
+            const mainMessage = document.getElementById('mainMessage').value || 'Your Message Here';
+            const supportingText = document.getElementById('supportingText').value;
+            const callToAction = document.getElementById('callToAction').value;
+
+            const preview = document.getElementById('billboardPreview');
+            const previewMain = document.getElementById('previewMain');
+            const previewSupporting = document.getElementById('previewSupporting');
+            const previewCTA = document.getElementById('previewCTA');
+
+            preview.style.background = themes[selectedTheme];
+            previewMain.textContent = mainMessage;
+
+            if (supportingText) {
+                previewSupporting.textContent = supportingText;
+                previewSupporting.classList.remove('hidden');
+            } else {
+                previewSupporting.classList.add('hidden');
+            }
+
+            if (callToAction) {
+                previewCTA.textContent = callToAction;
+                previewCTA.classList.remove('hidden');
+            } else {
+                previewCTA.classList.add('hidden');
+            }
+        }
+
+        // AI Suggestions
+        document.getElementById('aiSuggestBtn').addEventListener('click', async () => {
+            const campaignType = document.getElementById('campaignType').value;
+            const mainMessage = document.getElementById('mainMessage').value;
+            const supportingText = document.getElementById('supportingText').value;
+
+            const btn = document.getElementById('aiSuggestBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="generating">🤖 AI is thinking...</span>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://92.112.184.224:3010/api/creative-suggestions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaignType, mainMessage, supportingText })
+                });
+
+                const data = await response.json();
+                
+                const suggestionsPanel = document.getElementById('suggestionsPanel');
+                const suggestionsContent = document.getElementById('suggestionsContent');
+                
+                suggestionsContent.innerHTML = data.suggestions.map((s, i) => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition" onclick="applySuggestion(${i})">
+                        <div class="font-semibold text-gray-900 mb-1">${s.mainMessage}</div>
+                        ${s.supportingText ? `<div class="text-sm text-gray-600 mb-2">${s.supportingText}</div>` : ''}
+                        ${s.callToAction ? `<div class="text-sm font-medium text-blue-600">${s.callToAction}</div>` : ''}
+                    </div>
+                `).join('');
+
+                // Store suggestions globally for applySuggestion
+                window.currentSuggestions = data.suggestions;
+                
+                suggestionsPanel.classList.remove('hidden');
+            } catch (error) {
+                alert('AI suggestion failed. Please try again.');
+                console.error(error);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        window.applySuggestion = function(index) {
+            const suggestion = window.currentSuggestions[index];
+            document.getElementById('mainMessage').value = suggestion.mainMessage;
+            document.getElementById('supportingText').value = suggestion.supportingText || '';
+            document.getElementById('callToAction').value = suggestion.callToAction || '';
+            updatePreview();
+            
+            // Scroll to preview
+            document.getElementById('billboardPreview').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        // Download creative
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1920;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+
+            // Draw gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
+            const theme = themes[selectedTheme];
+            // Parse gradient colors (simplified)
+            if (selectedTheme === 'romantic') {
+                gradient.addColorStop(0, '#f093fb');
+                gradient.addColorStop(1, '#f5576c');
+            } else if (selectedTheme === 'professional') {
+                gradient.addColorStop(0, '#4facfe');
+                gradient.addColorStop(1, '#00f2fe');
+            } else if (selectedTheme === 'energetic') {
+                gradient.addColorStop(0, '#fa709a');
+                gradient.addColorStop(1, '#fee140');
+            } else if (selectedTheme === 'elegant') {
+                gradient.addColorStop(0, '#30cfd0');
+                gradient.addColorStop(1, '#330867');
+            } else if (selectedTheme === 'bold') {
+                gradient.addColorStop(0, '#ff0844');
+                gradient.addColorStop(1, '#ffb199');
+            } else if (selectedTheme === 'natural') {
+                gradient.addColorStop(0, '#56ab2f');
+                gradient.addColorStop(1, '#a8e063');
+            } else if (selectedTheme === 'sunset') {
+                gradient.addColorStop(0, '#ff6e7f');
+                gradient.addColorStop(1, '#bfe9ff');
+            } else if (selectedTheme === 'midnight') {
+                gradient.addColorStop(0, '#2c3e50');
+                gradient.addColorStop(1, '#3498db');
+            }
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 1920, 1080);
+
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 20;
+
+            const mainMessage = document.getElementById('mainMessage').value || 'Your Message Here';
+            const supportingText = document.getElementById('supportingText').value;
+            const callToAction = document.getElementById('callToAction').value;
+
+            let yPos = 540;
+
+            // Main message
+            ctx.font = 'bold 180px Arial';
+            ctx.fillText(mainMessage, 960, yPos - 150);
+
+            // Supporting text
+            if (supportingText) {
+                ctx.font = '80px Arial';
+                ctx.fillText(supportingText, 960, yPos + 50);
+            }
+
+            // CTA
+            if (callToAction) {
+                ctx.font = 'bold 60px Arial';
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fillRect(760, yPos + 150, 400, 100);
+                ctx.fillStyle = 'white';
+                ctx.fillText(callToAction, 960, yPos + 200);
+            }
+
+            // Download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `billboard-creative-${Date.now()}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        // Use creative button
+        document.getElementById('useCreativeBtn').addEventListener('click', () => {
+            // TODO: Integrate with booking flow
+            alert('Creative saved! You can now book a billboard with this creative.');
+            window.location.href = 'index.html';
+        });
+
+        // Initialize preview
+        updatePreview();
+    </script>
+</body>
+</html>
