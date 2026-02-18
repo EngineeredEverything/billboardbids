@@ -419,8 +419,32 @@ async function handleBooking(event, billboardId) {
                 body: JSON.stringify({ creativeUrl })
             });
             
-            alert(`✅ Booking Created!\n\nBooking ID: ${result.booking.id}\nTotal: $${result.booking.pricing.total.toFixed(2)}\n\n📋 Your creative has been submitted for approval.\n✅ You'll be notified within 4 hours.\n\nNext: Complete payment to confirm.\n\nConfirmation will be sent to ${formData.customerEmail}`);
-            closeBookingModal();
+            // Redirect to Stripe checkout for payment
+            submitBtn.textContent = 'Redirecting to payment...';
+            
+            const checkoutResponse = await fetch(`${API_BASE}/create-checkout-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    bookingId: result.booking.id,
+                    amount: result.booking.pricing.total
+                })
+            });
+            
+            const checkoutSession = await checkoutResponse.json();
+            
+            if (checkoutSession.url) {
+                // Redirect to Stripe checkout
+                window.location.href = checkoutSession.url;
+            } else if (checkoutSession.demo) {
+                // Demo mode - show info message
+                alert(`✅ Booking Created (Demo Mode)\n\nBooking ID: ${result.booking.id}\nTotal: $${result.booking.pricing.total.toFixed(2)}\n\n⚠️ Payment system not configured.\n${checkoutSession.message}\n\n📋 Your creative has been submitted for approval.\n\nConfirmation will be sent to ${formData.customerEmail}`);
+                closeBookingModal();
+            } else {
+                throw new Error('Failed to create payment session');
+            }
         } else {
             alert('❌ Error creating booking. Please try again.');
         }
