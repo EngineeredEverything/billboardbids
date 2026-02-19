@@ -4,7 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_demo');
-const { initDatabase, seedData, billboardQueries, bookingQueries, toCamelCase } = require('./database');
+const { initDatabase, seedData, billboardQueries, bookingQueries, leadQueries, toCamelCase } = require('./database');
 const PricingEngine = require('./pricing-engine');
 const emailService = require('./services/emailService');
 
@@ -752,17 +752,84 @@ function generateCreativeSuggestions(campaignType, mainMessage = '', supportingT
     return templates[campaignType] || templates.custom;
 }
 
+// =====================
+// LEAD CAPTURE ENDPOINTS
+// =====================
+
+// Owner signup - billboard owners interested in listing
+app.post('/api/owner-signup', (req, res) => {
+    try {
+        const { name, email, phone, company, city, state, numSigns, signType, message } = req.body;
+
+        if (!name || !email) {
+            return res.status(400).json({ error: 'Name and email are required' });
+        }
+
+        const id = leadQueries.createOwnerLead({ name, email, phone, company, city, state, numSigns, signType, message });
+
+        console.log(`📋 New owner lead: ${name} (${email}) - ${numSigns || '?'} signs in ${city || '?'}, ${state || '?'}`);
+
+        res.json({
+            success: true,
+            id,
+            message: "Thanks for your interest! We'll be in touch within 24 hours to get your billboard listed."
+        });
+    } catch (error) {
+        console.error('Owner signup error:', error);
+        res.status(500).json({ error: 'Failed to submit. Please try again.' });
+    }
+});
+
+// Advertiser lead - calculator users and waitlist signups
+app.post('/api/advertiser-lead', (req, res) => {
+    try {
+        const { email, name, business, city, monthlyBudget, useCase, impressionsCalculated, cpmCalculated, source } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const id = leadQueries.createAdvertiserLead({ email, name, business, city, monthlyBudget, useCase, impressionsCalculated, cpmCalculated, source });
+
+        console.log(`🎯 New advertiser lead: ${email} (source: ${source || 'calculator'})`);
+
+        res.json({
+            success: true,
+            id,
+            message: "You're on the list! We'll notify you when new billboard inventory goes live in your area."
+        });
+    } catch (error) {
+        console.error('Advertiser lead error:', error);
+        res.status(500).json({ error: 'Failed to submit. Please try again.' });
+    }
+});
+
+// Admin: get all leads
+app.get('/api/leads', (req, res) => {
+    try {
+        const stats = leadQueries.getLeadStats();
+        const ownerLeads = leadQueries.getAllOwnerLeads();
+        const advertiserLeads = leadQueries.getAllAdvertiserLeads();
+        res.json({ stats, ownerLeads, advertiserLeads });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     try {
         const billboards = billboardQueries.getAll();
         const bookings = bookingQueries.getAll();
         
+        const leadStats = leadQueries.getLeadStats();
         res.json({ 
             status: 'ok',
             database: 'connected',
             billboards: billboards.length,
             bookings: bookings.length,
+            ownerLeads: leadStats.ownerLeads,
+            advertiserLeads: leadStats.advertiserLeads,
             timestamp: new Date().toISOString()
         });
     } catch (error) {

@@ -101,7 +101,7 @@
                     <a href="creative-assistant.html" class="text-base text-purple-600 hover:text-purple-800 font-medium hidden lg:inline-flex items-center gap-1">
                         <span>✨</span> AI Creative
                     </a>
-                    <a href="#" class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 font-semibold text-base transition-colors">List Your Billboard</a>
+                    <a href="/list-your-billboard.html" class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 font-semibold text-base transition-colors">List Your Billboard</a>
                 </div>
             </div>
         </div>
@@ -201,12 +201,31 @@
                 </div>
 
                 <div class="border-t pt-6">
-                    <div class="text-center">
+                    <div class="text-center mb-6">
                         <p class="text-gray-600 mb-4">Ready to launch your campaign?</p>
                         <button onclick="document.getElementById('billboards').scrollIntoView({behavior: 'smooth'})" 
                                 class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 text-lg shadow-lg inline-flex items-center gap-2">
                             <i class="fas fa-arrow-down"></i> Browse Available Billboards
                         </button>
+                    </div>
+                    <!-- Email Capture -->
+                    <div id="email-capture-box" class="bg-blue-50 border border-blue-200 rounded-xl p-5 mt-2">
+                        <div id="email-capture-form-area">
+                            <p class="text-sm font-semibold text-blue-800 mb-1">📧 Get notified when new inventory drops near you</p>
+                            <p class="text-xs text-blue-600 mb-3">We'll email your ROI results + alert you when billboard inventory opens in your area.</p>
+                            <div class="flex gap-2">
+                                <input type="email" id="capture-email" placeholder="your@email.com"
+                                    class="flex-1 border border-blue-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                <button onclick="submitEmailCapture()"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors whitespace-nowrap">
+                                    Notify Me
+                                </button>
+                            </div>
+                            <p id="email-capture-error" class="text-xs text-red-600 mt-1 hidden"></p>
+                        </div>
+                        <div id="email-capture-success" class="hidden text-center py-1">
+                            <p class="text-sm font-semibold text-green-700">✅ You're on the list! We'll notify you when inventory drops nearby.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -453,7 +472,7 @@
                     <h4 class="text-white font-bold mb-4">For Owners</h4>
                     <ul class="space-y-2 text-sm">
                         <li><a href="owner-dashboard.html" class="hover:text-white">Owner Dashboard</a></li>
-                        <li><a href="#" class="hover:text-white">List Your Billboard</a></li>
+                        <li><a href="/list-your-billboard.html" class="hover:text-white">List Your Billboard</a></li>
                         <li><a href="#" class="hover:text-white">Owner FAQ</a></li>
                     </ul>
                 </div>
@@ -578,6 +597,47 @@
                     </div>
                 </div>
             `;
+        }
+
+        async function submitEmailCapture() {
+            const email = document.getElementById('capture-email').value.trim();
+            const errorEl = document.getElementById('email-capture-error');
+            errorEl.classList.add('hidden');
+
+            if (!email || !email.includes('@')) {
+                errorEl.textContent = 'Please enter a valid email address.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Gather calculator values for context
+            const budget = document.getElementById('budget') ? document.getElementById('budget').value : null;
+            const impressionsEl = document.getElementById('result-impressions');
+            const cpmEl = document.getElementById('result-cpm');
+
+            try {
+                const res = await fetch('/api/advertiser-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        source: 'calculator',
+                        impressionsCalculated: impressionsEl ? parseInt(impressionsEl.textContent.replace(/,/g, '')) || null : null,
+                        cpmCalculated: cpmEl ? parseFloat(cpmEl.textContent.replace('$', '')) || null : null,
+                        monthlyBudget: budget || null
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('email-capture-form-area').classList.add('hidden');
+                    document.getElementById('email-capture-success').classList.remove('hidden');
+                } else {
+                    throw new Error('Failed to submit');
+                }
+            } catch (err) {
+                errorEl.textContent = 'Something went wrong. Please try again.';
+                errorEl.classList.remove('hidden');
+            }
         }
     </script>
 </body>

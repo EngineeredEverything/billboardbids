@@ -57,6 +57,42 @@ function initDatabase() {
         )
     `);
 
+    // Create owner_leads table (billboard owners interested in listing)
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS owner_leads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            company TEXT,
+            city TEXT,
+            state TEXT,
+            num_signs INTEGER,
+            sign_type TEXT,
+            message TEXT,
+            status TEXT DEFAULT 'new',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    // Create advertiser_leads table (advertisers who used calculator or requested waitlist)
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS advertiser_leads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            name TEXT,
+            business TEXT,
+            city TEXT,
+            monthly_budget TEXT,
+            use_case TEXT,
+            impressions_calculated INTEGER,
+            cpm_calculated REAL,
+            source TEXT DEFAULT 'calculator',
+            status TEXT DEFAULT 'new',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
     console.log('✅ Database initialized');
 }
 
@@ -297,11 +333,59 @@ function toCamelCase(obj) {
     return result;
 }
 
+// Lead queries
+const leadQueries = {
+    createOwnerLead: (lead) => {
+        const stmt = db.prepare(`
+            INSERT INTO owner_leads (name, email, phone, company, city, state, num_signs, sign_type, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+            lead.name, lead.email, lead.phone || null, lead.company || null,
+            lead.city || null, lead.state || null, lead.numSigns || null,
+            lead.signType || null, lead.message || null
+        );
+        return result.lastInsertRowid;
+    },
+
+    createAdvertiserLead: (lead) => {
+        const stmt = db.prepare(`
+            INSERT INTO advertiser_leads (email, name, business, city, monthly_budget, use_case, impressions_calculated, cpm_calculated, source)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+            lead.email, lead.name || null, lead.business || null, lead.city || null,
+            lead.monthlyBudget || null, lead.useCase || null,
+            lead.impressionsCalculated || null, lead.cpmCalculated || null,
+            lead.source || 'calculator'
+        );
+        return result.lastInsertRowid;
+    },
+
+    getAllOwnerLeads: () => {
+        return db.prepare('SELECT * FROM owner_leads ORDER BY created_at DESC').all();
+    },
+
+    getAllAdvertiserLeads: () => {
+        return db.prepare('SELECT * FROM advertiser_leads ORDER BY created_at DESC').all();
+    },
+
+    getLeadStats: () => {
+        return {
+            ownerLeads: db.prepare('SELECT COUNT(*) as count FROM owner_leads').get().count,
+            advertiserLeads: db.prepare('SELECT COUNT(*) as count FROM advertiser_leads').get().count,
+            newOwnerLeads: db.prepare("SELECT COUNT(*) as count FROM owner_leads WHERE status = 'new'").get().count,
+            newAdvertiserLeads: db.prepare("SELECT COUNT(*) as count FROM advertiser_leads WHERE status = 'new'").get().count,
+        };
+    }
+};
+
 module.exports = {
     db,
     initDatabase,
     seedData,
     billboardQueries,
     bookingQueries,
+    leadQueries,
     toCamelCase
 };
